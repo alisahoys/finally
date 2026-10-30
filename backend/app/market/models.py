@@ -14,6 +14,20 @@ class PriceUpdate:
     price: float
     previous_price: float
     timestamp: float = field(default_factory=time.time)  # Unix seconds
+    # Session open price: first price seen since the ticker was tracked.
+    # Defaults to previous_price when not supplied.
+    open_price: float | None = None
+
+    def __post_init__(self) -> None:
+        if self.open_price is None:
+            object.__setattr__(self, "open_price", self.previous_price)
+
+    @property
+    def session_change_percent(self) -> float:
+        """Percentage change versus the session open price."""
+        if not self.open_price:
+            return 0.0
+        return round((self.price - self.open_price) / self.open_price * 100, 4)
 
     @property
     def change(self) -> float:
@@ -42,8 +56,10 @@ class PriceUpdate:
             "ticker": self.ticker,
             "price": self.price,
             "previous_price": self.previous_price,
+            "open_price": self.open_price,
             "timestamp": self.timestamp,
             "change": self.change,
             "change_percent": self.change_percent,
+            "session_change_percent": self.session_change_percent,
             "direction": self.direction,
         }
