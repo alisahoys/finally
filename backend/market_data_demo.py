@@ -1,6 +1,6 @@
 """FinAlly Market Data Simulator Demo.
 
-Run with:  uv run market_data_demo.py
+Run with:  uv run market_data_demo.py [--duration SECONDS] [--no-screen]
 
 Displays a live-updating terminal dashboard of simulated stock prices
 using the GBM simulator and Rich library.
@@ -8,7 +8,9 @@ using the GBM simulator and Rich library.
 
 from __future__ import annotations
 
+import argparse
 import asyncio
+import sys
 import time
 from collections import deque
 
@@ -20,7 +22,6 @@ from rich.table import Table
 from rich.text import Text
 
 from app.market.cache import PriceCache
-from app.market.seed_prices import SEED_PRICES
 from app.market.simulator import SimulatorDataSource
 
 # Sparkline characters, low to high
@@ -29,7 +30,7 @@ SPARK_CHARS = "▁▂▃▄▅▆▇█"
 # Ordered ticker list matching the default watchlist
 TICKERS = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META", "JPM", "V", "NFLX"]
 
-DURATION = 60  # seconds
+DEFAULT_DURATION = 60  # seconds
 
 
 def sparkline(values: list[float]) -> str:
@@ -54,7 +55,6 @@ def format_price(price: float) -> str:
 def build_table(
     cache: PriceCache,
     history: dict[str, deque],
-    elapsed: float,
 ) -> Table:
     """Build the price table."""
     table = Table(
@@ -106,7 +106,7 @@ def build_event_log(events: deque) -> Panel:
     """Build the event log panel."""
     text = Text()
     for evt in events:
-        text.append(evt)
+        text.append_text(Text.from_markup(evt))
         text.append("\n")
     if not events:
         text.append("Watching for notable moves (>1% change)...", style="bright_black italic")
@@ -123,10 +123,11 @@ def build_dashboard(
     history: dict[str, deque],
     events: deque,
     start_time: float,
+    duration: float,
 ) -> Layout:
     """Build the full dashboard layout."""
     elapsed = time.time() - start_time
-    remaining = max(0, DURATION - elapsed)
+    remaining = max(0, duration - elapsed)
 
     layout = Layout()
     layout.split_column(
@@ -153,7 +154,7 @@ def build_dashboard(
     # Body: price table
     layout["body"].update(
         Panel(
-            build_table(cache, history, elapsed),
+            build_table(cache, history),
             title="[bold bright_white]Live Prices[/]",
             border_style="bright_black",
         )
@@ -166,7 +167,7 @@ def build_dashboard(
 
 
 def print_summary(cache: PriceCache) -> None:
-    """Print final summary comparing to seed prices."""
+    """Print final summary comparing to each ticker's session open price."""
     console = Console()
     console.print()
     console.print("[bold bright_yellow]  FinAlly[/] [bold]Session Summary[/]")
@@ -174,17 +175,17 @@ def print_summary(cache: PriceCache) -> None:
 
     table = Table(border_style="bright_black", header_style="bold bright_white", expand=False)
     table.add_column("Ticker", style="bold bright_white", width=8)
-    table.add_column("Seed Price", justify="right", width=12)
+    table.add_column("Open Price", justify="right", width=12)
     table.add_column("Final Price", justify="right", width=12)
     table.add_column("Session Change", justify="right", width=14)
 
     for ticker in TICKERS:
-        seed = SEED_PRICES.get(ticker, 0)
         update = cache.get(ticker)
         if update is None:
             continue
+        open_price = update.open_price
         final = update.price
-        session_change = ((final - seed) / seed) * 100 if seed else 0
+        session_change = update.session_change_percent
 
         if session_change > 0:
             color = "green"
@@ -195,7 +196,7 @@ def print_summary(cache: PriceCache) -> None:
 
         table.add_row(
             ticker,
-            f"${format_price(seed)}",
+            f"${format_price(open_price)}",
             f"[{color}]${format_price(final)}[/]",
             f"[{color}]{session_change:+.2f}%[/]",
         )
@@ -204,7 +205,7 @@ def print_summary(cache: PriceCache) -> None:
     console.print()
 
 
-async def run() -> None:
+async def run(duration: float = DEFAULT_DURATION, screen: bool = True) -> None:
     """Main demo loop."""
     cache = PriceCache()
     source = SimulatorDataSource(price_cache=cache, update_interval=0.5)
@@ -226,12 +227,12 @@ async def run() -> None:
 
     try:
         with Live(
-            build_dashboard(cache, history, events, start_time),
+            build_dashboard(cache, history, events, start_time, duration),
             refresh_per_second=4,
-            screen=True,
+            screen=screen,
         ) as live:
             last_version = cache.version
-            while time.time() - start_time < DURATION:
+            while time.time() - start_time < duration:
                 await asyncio.sleep(0.25)
 
                 # Check for updates
@@ -258,9 +259,9 @@ async def run() -> None:
                             f"${format_price(update.price)}"
                         )
 
-                live.update(build_dashboard(cache, history, events, start_time))
+                live.update(build_dashboard(cache, history, events, start_time, duration))
 
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, asyncio.CancelledError):
         pass
     finally:
         await source.stop()
@@ -268,5 +269,19 @@ async def run() -> None:
     print_summary(cache)
 
 
+def main() -> None:
+    parser = argparse.ArgumentParser(description="FinAlly market data simulator demo")
+    parser.add_argument("--duration", type=float, default=DEFAULT_DURATION,
+                        help="seconds to run (default: %(default)s)")
+    parser.add_argument("--no-screen", action="store_true",
+                        help="don't use the alternate screen (auto when stdout is not a TTY)")
+    args = parser.parse_args()
+    screen = not args.no_screen and sys.stdout.isatty()
+    try:
+        asyncio.run(run(args.duration, screen))
+    except KeyboardInterrupt:
+        pass
+
+
 if __name__ == "__main__":
-    asyncio.run(run())
+    main()

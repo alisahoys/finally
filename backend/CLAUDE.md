@@ -17,7 +17,7 @@ from app.market import PriceCache, PriceUpdate, MarketDataSource, create_market_
 
 ### Core Types
 
-- **`PriceUpdate`** — Immutable dataclass: `ticker`, `price`, `previous_price`, `timestamp`, plus properties `change`, `change_percent`, `direction` ("up"/"down"/"flat"), and `to_dict()` for JSON serialization.
+- **`PriceUpdate`** — Immutable dataclass: `ticker`, `price`, `previous_price`, `timestamp`, `open_price` (session open; defaults to `previous_price`), plus properties `change`, `change_percent`, `session_change_percent`, `direction` ("up"/"down"/"flat"), and `to_dict()` for JSON serialization.
 
 - **`PriceCache`** — Thread-safe in-memory store. Key methods:
   - `update(ticker, price, timestamp=None) -> PriceUpdate`
@@ -55,5 +55,5 @@ uv run --extra dev ruff check app/ tests/ # Lint
 ## Demo
 
 ```bash
-uv run market_data_demo.py   # Live terminal dashboard with simulated prices
+uv run market_data_demo.py   # (--duration N, --no-screen) Live terminal dashboard with simulated prices
 ```
