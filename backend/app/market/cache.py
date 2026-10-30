@@ -31,11 +31,15 @@ class PriceCache:
             prev = self._prices.get(ticker)
             previous_price = prev.price if prev else price
 
+            # Session open is fixed by the first price seen for the ticker
+            open_price = prev.open_price if prev else round(price, 2)
+
             update = PriceUpdate(
                 ticker=ticker,
                 price=round(price, 2),
                 previous_price=round(previous_price, 2),
                 timestamp=ts,
+                open_price=open_price,
             )
             self._prices[ticker] = update
             self._version += 1

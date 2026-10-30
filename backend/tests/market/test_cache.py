@@ -44,6 +44,20 @@ class TestPriceCache:
         cache.remove("AAPL")
         assert cache.get("AAPL") is None
 
+    def test_open_price_fixed_by_first_update(self):
+        cache = PriceCache()
+        cache.update("AAPL", 190.00)
+        update = cache.update("AAPL", 191.90)
+        assert update.open_price == 190.00
+        assert update.session_change_percent == 1.0
+
+    def test_open_price_resets_after_remove(self):
+        cache = PriceCache()
+        cache.update("AAPL", 190.00)
+        cache.remove("AAPL")
+        update = cache.update("AAPL", 200.00)
+        assert update.open_price == 200.00
+
     def test_remove_nonexistent(self):
         """Test removing a ticker that doesn't exist."""
         cache = PriceCache()
