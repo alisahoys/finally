@@ -1,0 +1,15 @@
+{
+  "name": "finally",
+  "description": "Plugins for the FinAlly project",
+  "owner": {
+    "name": "Alisa Hoys"
+  },
+  "plugins": [
+    {
+      "name": "independent-reviewer",
+      "source": "./independent-reviewer",
+      "description": "Carry out independent review of all changes since last commit",
+      "version": "1.0.0"
+    }
+  ]
+}
