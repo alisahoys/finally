@@ -18,4 +18,5 @@ RUN uv sync --frozen --no-dev
 COPY --from=frontend /frontend/out ./static
 RUN mkdir -p /app/db
 EXPOSE 8000
-CMD [".venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Hosts such as Render set PORT; local runs use the default.
+CMD ["sh", "-c", "exec .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
