@@ -4,7 +4,7 @@ An AI-powered trading terminal: live streaming prices, a simulated $10k portfoli
 
 ## Status
 
-The market data subsystem (simulator, Massive client, price cache, SSE stream) is complete. The rest of the platform is in progress. See `planning/PLAN.md` for the full spec.
+The backend (market data, portfolio, watchlist, chat) and frontend are complete. Docker packaging and E2E tests are in progress. See `planning/PLAN.md` for the full spec.
 
 ## Stack
 
@@ -37,11 +37,22 @@ uv run pytest
 uv run market_data_demo.py   # terminal demo of the price simulator
 ```
 
+## Frontend Development
+
+Run the backend first, then in a second terminal:
+
+```bash
+cd frontend
+npm install
+npm test
+npm run dev   # http://localhost:3000, proxies /api to the backend on port 8000
+```
+
 ## Layout
 
 ```
 backend/    FastAPI app and tests
-frontend/   Next.js app (planned)
+frontend/   Next.js app
 planning/   Spec and agent docs
 test/       Playwright E2E tests (planned)
 scripts/    Docker start/stop scripts (planned)

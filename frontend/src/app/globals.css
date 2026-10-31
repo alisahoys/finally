@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-sofia), ui-sans-serif, system-ui, sans-serif;
+
+  --color-canvas: #0d1117;
+  --color-panel: #141a23;
+  --color-raised: #1c2430;
+  --color-line: #2b3442;
+  --color-ink: #e3e8ef;
+  --color-muted: #8f9bab;
+  --color-focus: #ecad0a;
+  --color-ai: #209dd7;
+  --color-submit: #753991;
+  --color-submit-ink: #cfa3e6;
+  --color-gain: #3ec48f;
+  --color-loss: #f0696a;
+  --color-gain-deep: #0f7d57;
+  --color-loss-deep: #b5353a;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+@keyframes flash-up {
+  from {
+    background-color: color-mix(in srgb, var(--color-gain) 38%, transparent);
+  }
+}
+
+@keyframes flash-down {
+  from {
+    background-color: color-mix(in srgb, var(--color-loss) 38%, transparent);
+  }
+}
+
+.flash-up {
+  animation: flash-up 500ms ease-out;
+}
+
+.flash-down {
+  animation: flash-down 500ms ease-out;
+}
+
+@keyframes thinking {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.thinking {
+  animation: thinking 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash-up,
+  .flash-down,
+  .thinking {
+    animation: none;
+  }
+}
+
+@layer components {
+  .field {
+    height: 2rem;
+    border: 1px solid var(--color-line);
+    border-radius: 0.25rem;
+    background: var(--color-canvas);
+    padding-inline: 0.5rem;
+  }
+
+  .field::placeholder {
+    color: var(--color-muted);
+    text-transform: none;
+  }
+
+  .btn-submit,
+  .btn-outline {
+    height: 2rem;
+    border: 1px solid var(--color-submit);
+    border-radius: 0.25rem;
+    padding-inline: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-submit {
+    background: var(--color-submit);
+    color: white;
+  }
+
+  .btn-submit:hover {
+    background: color-mix(in srgb, var(--color-submit) 82%, white);
+  }
+
+  .btn-submit:disabled {
+    opacity: 0.5;
+    cursor: wait;
+  }
+
+  .btn-outline {
+    color: var(--color-submit-ink);
+  }
+
+  .btn-outline:hover {
+    background: color-mix(in srgb, var(--color-submit) 30%, transparent);
+  }
+}
