@@ -505,7 +505,7 @@ The named volume `finally-data` is mounted at `/app/db` in the container. The ba
 - Stops and removes the running container
 - Does NOT remove the volume (data persists)
 
-**Windows**: there are no PowerShell scripts. Run the bash scripts from a WSL shell (Docker runs inside WSL).
+**Windows**: `scripts/start_windows.cmd` and `scripts/stop_windows.cmd` are thin wrappers that run the bash scripts through `wsl.exe` (Docker runs inside WSL), so they need a default WSL distro with Docker. There are no PowerShell scripts.
 
 All scripts should be idempotent — safe to run multiple times.
 
