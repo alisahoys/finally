@@ -44,12 +44,30 @@ router = create_stream_router(price_cache)  # Returns FastAPI APIRouter
 
 Default tickers: AAPL, GOOGL, MSFT, AMZN, TSLA, NVDA, META, JPM, V, NFLX. Seed prices and per-ticker volatility/drift params are in `app/market/seed_prices.py`.
 
+## Database
+
+The SQLite layer lives in `db/` (`schema.sql` plus Python modules) and is imported as `db`. Stdlib `sqlite3`, autocommit mode.
+
+```python
+from db import connect, init_db, execute_trade, TradeError
+
+init_db()                  # In the lifespan, before the market data source starts
+conn = connect()           # One connection per request or task; never shared
+trade = execute_trade(conn, "AAPL", "buy", 10, 190.5)  # Atomic; raises TradeError
+```
+
+- **Portfolio**: `get_cash`, `get_position`, `get_positions`, `execute_trade`, `record_snapshot`, `get_snapshots`. `TradeError` messages are user-facing. Callers record a snapshot after each trade.
+- **Watchlist**: `get_watchlist`, `add_to_watchlist`, `remove_from_watchlist` (both return `False` on no change), `get_tracked_tickers` (watchlist union positions).
+- **Chat**: `add_chat_message`, `get_recent_chat_messages`.
+- **Transactions**: wrap multi-statement work in `with transaction(conn):`. It cannot be nested.
+- **Location**: `DB_PATH` is `<parent of backend>/db/finally.db`. In Docker the code must live at `/app/backend` (not `/app`), installed editable, so this resolves to the `/app/db` volume and the volume does not shadow `backend/db/`.
+
 ## Running Tests
 
 ```bash
 uv run --extra dev pytest -v              # All tests
-uv run --extra dev pytest --cov=app       # With coverage
-uv run --extra dev ruff check app/ tests/ # Lint
+uv run --extra dev pytest --cov=app --cov=db       # With coverage
+uv run --extra dev ruff check app/ db/ tests/ # Lint
 ```
 
 ## Demo
