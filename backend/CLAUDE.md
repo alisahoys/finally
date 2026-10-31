@@ -62,6 +62,16 @@ trade = execute_trade(conn, "AAPL", "buy", 10, 190.5)  # Atomic; raises TradeErr
 - **Transactions**: wrap multi-statement work in `with transaction(conn):`. It cannot be nested.
 - **Location**: `DB_PATH` is `<parent of backend>/db/finally.db`. In Docker the code must live at `/app/backend` (not `/app`), installed editable, so this resolves to the `/app/db` volume and the volume does not shadow `backend/db/`.
 
+## API
+
+`app/main.py` builds the app (`create_app`, module-level `app` for uvicorn): `init_db`, market data source, 30s snapshot task, routers, and error handlers. Routes live in `app/api/` and stay thin; the logic is in `app/services.py`.
+
+- **Implemented**: `/api/health`, `/api/stream/prices`, `/api/portfolio` (`GET`, `POST /trade`, `GET /history`), `/api/watchlist` (`GET`, `POST`, `DELETE /{ticker}`). Not yet: `/api/chat`, static frontend serving.
+- **Trading**: call `place_trade`, not `db.execute_trade`. It validates, prices from the cache, keeps tracking in sync and records the snapshot. Raises `ActionError`/`TradeError`, whose messages are user-facing.
+- **Tracking**: after any watchlist or position change call `sync_tracking`, which applies the "watchlist union positions" rule.
+- **Threads**: reads are `def` (worker thread); anything calling the market data source is `async` so it stays on the event loop.
+- **Tests**: `tests/api/conftest.py` has `FakeSource`, a deterministic source injected through `create_app(source_factory=...)`.
+
 ## Running Tests
 
 ```bash
