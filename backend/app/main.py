@@ -5,10 +5,11 @@ from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager, closing, suppress
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.api import portfolio, watchlist
+from app.api import chat, portfolio, watchlist
 from app.market import (
     MarketDataSource,
     PriceCache,
@@ -19,6 +20,9 @@ from app.services import ActionError, NotOnWatchlistError, get_portfolio
 from db import DB_PATH, TradeError, connect, get_tracked_tickers, init_db, record_snapshot
 
 SNAPSHOT_INTERVAL = 30.0
+ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+
+load_dotenv(ENV_FILE)  # Local development only; Docker has no such file. Real env vars win.
 
 
 async def snapshot_loop(db_path: Path, cache: PriceCache, interval: float) -> None:
@@ -69,6 +73,7 @@ def create_app(
     app.include_router(create_stream_router(app.state.cache))
     app.include_router(portfolio.router)
     app.include_router(watchlist.router)
+    app.include_router(chat.router)
 
     @app.get("/api/health", tags=["system"])
     def health() -> dict:
