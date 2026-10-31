@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from massive import RESTClient
 
 from app.market.cache import PriceCache
 from app.market.massive_client import MassiveDataSource
@@ -16,6 +17,20 @@ def _make_snapshot(ticker: str, price: float, timestamp_ms: int) -> MagicMock:
     snap.last_trade.price = price
     snap.last_trade.timestamp = timestamp_ms
     return snap
+
+
+def test_fetch_snapshots_requests_the_stocks_snapshot_path():
+    """The real SDK builds the documented URL; only its HTTP layer is stubbed."""
+    source = MassiveDataSource(api_key="test-key", price_cache=PriceCache())
+    source._client = RESTClient(api_key="test-key")
+    source._tickers = ["AAPL", "MSFT"]
+
+    with patch.object(source._client, "_get", return_value=[]) as http_get:
+        source._fetch_snapshots()
+
+    request = http_get.call_args.kwargs
+    assert request["path"] == "/v2/snapshot/locale/us/markets/stocks/tickers"
+    assert request["params"]["tickers"] == "AAPL,MSFT"
 
 
 @pytest.mark.asyncio
