@@ -4,7 +4,7 @@ An AI-powered trading terminal: live streaming prices, a simulated $10k portfoli
 
 ## Status
 
-The backend (market data, portfolio, watchlist, chat) and frontend are complete. Docker packaging and E2E tests are in progress. See `planning/PLAN.md` for the full spec.
+The backend (market data, portfolio, watchlist, chat), frontend, Docker image and E2E tests are complete. Start/stop scripts are not written yet. See `planning/PLAN.md` for the full spec.
 
 ## Stack
 
@@ -48,13 +48,21 @@ npm test
 npm run dev   # http://localhost:3000, proxies /api to the backend on port 8000
 ```
 
+## E2E Tests
+
+Playwright runs in Docker against the app, using the simulator, the mock LLM and a fresh database:
+
+```bash
+docker compose -f test/docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from playwright
+```
+
 ## Layout
 
 ```
 backend/    FastAPI app and tests
 frontend/   Next.js app
 planning/   Spec and agent docs
-test/       Playwright E2E tests (planned)
+test/       Playwright E2E tests
 scripts/    Docker start/stop scripts (planned)
 ```
 

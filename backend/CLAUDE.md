@@ -66,7 +66,7 @@ trade = execute_trade(conn, "AAPL", "buy", 10, 190.5)  # Atomic; raises TradeErr
 
 `app/main.py` builds the app (`create_app`, module-level `app` for uvicorn): `init_db`, market data source, 30s snapshot task, routers, and error handlers. Routes live in `app/api/` and stay thin; the logic is in `app/services.py`.
 
-- **Implemented**: `/api/health`, `/api/stream/prices`, `/api/portfolio` (`GET`, `POST /trade`, `GET /history`), `/api/watchlist` (`GET`, `POST`, `DELETE /{ticker}`), `POST /api/chat`. Not yet: static frontend serving.
+- **Implemented**: `/api/health`, `/api/stream/prices`, `/api/portfolio` (`GET`, `POST /trade`, `GET /history`), `/api/watchlist` (`GET`, `POST`, `DELETE /{ticker}`), `POST /api/chat`. The static frontend is served from `backend/static/` when that directory exists (Docker only).
 - **Trading**: call `place_trade`, not `db.execute_trade`. It validates, prices from the cache, keeps tracking in sync and records the snapshot. Raises `ActionError`/`TradeError`, whose messages are user-facing.
 - **Tracking**: after any watchlist or position change call `sync_tracking`, which applies the "watchlist union positions" rule.
 - **Threads**: reads are `def` (worker thread); anything calling the market data source is `async` so it stays on the event loop.

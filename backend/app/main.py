@@ -8,6 +8,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api import chat, portfolio, watchlist
 from app.market import (
@@ -21,6 +22,7 @@ from db import DB_PATH, TradeError, connect, get_tracked_tickers, init_db, recor
 
 SNAPSHOT_INTERVAL = 30.0
 ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+STATIC_DIR = Path(__file__).resolve().parents[1] / "static"
 
 load_dotenv(ENV_FILE)  # Local development only; Docker has no such file. Real env vars win.
 
@@ -59,6 +61,7 @@ def _not_found(_: Request, exc: Exception) -> JSONResponse:
 def create_app(
     db_path: Path = DB_PATH,
     source_factory: Callable[[PriceCache], MarketDataSource] = create_market_data_source,
+    static_dir: Path = STATIC_DIR,
 ) -> FastAPI:
     """Build the application; nothing is started until the lifespan runs."""
     app = FastAPI(title="FinAlly", lifespan=lifespan)
@@ -79,6 +82,9 @@ def create_app(
     def health() -> dict:
         """Report that the server is up."""
         return {"status": "ok"}
+
+    if static_dir.is_dir():  # Only the Docker image ships the frontend build.
+        app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
     return app
 

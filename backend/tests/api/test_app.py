@@ -17,6 +17,16 @@ def test_health(client):
     assert response.json() == {"status": "ok"}
 
 
+def test_serves_static_frontend_without_shadowing_the_api(tmp_path):
+    static = tmp_path / "static"
+    static.mkdir()
+    (static / "index.html").write_text("<h1>FinAlly</h1>")
+    app = create_app(db_path=tmp_path / "test.db", source_factory=FakeSource, static_dir=static)
+    with TestClient(app) as client:
+        assert "FinAlly" in client.get("/").text
+        assert client.get("/api/health").json() == {"status": "ok"}
+
+
 def test_stream_route_is_mounted(app):
     assert "/api/stream/prices" in {route.path for route in app.routes}
 
